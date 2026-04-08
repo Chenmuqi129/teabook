@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍃</text></svg>">
-    <title>茶叶生意智慧管理系统</title>
+    <title>茶叶管理系统-带历史明细版</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -21,156 +21,44 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 10px;
-            line-height: 1.5;
-        }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 10px; }
+        .container { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
 
-        .container { max-width: 1000px; margin: 0 auto; padding-bottom: 40px; }
+        header { text-align: center; padding: 15px 0; background: var(--primary-color); color: white; border-radius: 12px; margin-bottom: 15px; }
+        .date-picker { border: none; background: rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 20px; outline: none; }
 
-        header {
-            text-align: center;
-            padding: 20px 0;
-            background: linear-gradient(135deg, var(--primary-color), #4a7c44);
-            color: white;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-        }
-        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
-        .date-container { margin-top: 10px; }
-        .date-picker {
-            border: none;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            outline: none;
-        }
+        .price-settings { background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 1px dashed var(--primary-color); }
+        .price-group label { display: block; font-size: 0.7rem; color: var(--text-muted); }
+        .price-group input { width: 100%; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; font-weight: bold; }
 
-        /* 汇总卡片 */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .summary-item {
-            background: var(--card-bg);
-            padding: 15px 10px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            border-bottom: 4px solid var(--border-color);
-        }
-        .summary-item span { font-size: 0.8rem; color: var(--text-muted); display: block; }
-        .summary-item b { font-size: 1.1rem; color: var(--primary-color); display: block; margin-top: 4px; }
-        .summary-item.profit b { color: var(--accent-color); }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .summary-item { background: var(--card-bg); padding: 12px 5px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); }
+        .summary-item span { font-size: 0.75rem; color: var(--text-muted); display: block; }
+        .summary-item b { font-size: 1rem; color: var(--primary-color); display: block; }
 
-        /* 区块样式 */
-        .section {
-            background: var(--card-bg);
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-        .section-header {
-            padding: 15px 20px;
-            background-color: var(--primary-light);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .section-header h3 { margin: 0; font-size: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 6px; }
-        .total-badge { font-size: 0.85rem; font-weight: bold; background: white; padding: 2px 8px; border-radius: 10px; color: var(--primary-color); }
+        .section { background: var(--card-bg); border-radius: 12px; margin-bottom: 15px; box-shadow: var(--shadow); overflow: hidden; }
+        .section-header { padding: 10px 15px; background-color: var(--primary-light); display: flex; justify-content: space-between; align-items: center; }
+        .section-header h3 { margin: 0; font-size: 0.9rem; color: var(--primary-color); }
 
-        .section-content { padding: 15px; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 13px; }
+        th { text-align: left; color: var(--text-muted); padding: 8px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 8px 5px; }
 
-        /* 表格交互优化 */
-        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th { text-align: left; font-size: 0.8rem; color: var(--text-muted); padding: 10px; border-bottom: 1px solid var(--border-color); }
-        td { padding: 10px 5px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; }
+        .btn-add { width: 100%; padding: 8px; background: var(--primary-light); color: var(--primary-color); border: 1px dashed var(--primary-color); border-radius: 8px; margin-top: 10px; font-weight: bold; }
+        .btn-del { background: #fff1f0; color: var(--danger-color); border: none; padding: 4px 8px; border-radius: 4px; }
+        .btn-save { width: 100%; padding: 14px; background: var(--primary-color); color: white; font-size: 1rem; border-radius: 10px; border: none; margin-top: 10px; }
 
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
-            -webkit-appearance: none; /* 移除移动端默认样式 */
-        }
-        input:focus, select:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 0 2px rgba(45, 90, 39, 0.1); }
-
-        .btn {
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn:active { transform: scale(0.98); }
-        .btn-add {
-            width: 100%;
-            padding: 10px;
-            background: var(--primary-light);
-            color: var(--primary-color);
-            border: 1px dashed var(--primary-color);
-            margin-top: 10px;
-        }
-        .btn-del { background: #fff1f0; color: var(--danger-color); padding: 6px; }
-        .btn-save {
-            width: 100%;
-            padding: 16px;
-            background: var(--primary-color);
-            color: white;
-            font-size: 1.1rem;
-            margin-top: 10px;
-            box-shadow: 0 4px 12px rgba(45, 90, 39, 0.2);
-        }
-
-        .box-input-group { 
-            background: #fffaf0; 
-            padding: 8px; 
-            border-radius: 8px; 
-            margin-top: 5px; 
-            border: 1px solid #ffe8cc;
-            display: none; 
-        }
-
-        /* 备份区 */
-        .backup-section {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-        }
-        .btn-excel {
-            background: #27ae60;
-            color: white;
-            padding: 12px 24px;
-            width: 100%;
-            margin-top: 15px;
-            font-size: 1rem;
-        }
-
-        @media (max-width: 480px) {
-            .summary-grid { grid-template-columns: 1fr; }
-            .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; }
-            .summary-item b { margin-top: 0; }
-        }
+        /* 历史明细样式 */
+        .history-section { margin-top: 30px; }
+        .history-item { background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--primary-color); }
+        .history-main { display: flex; justify-content: space-between; align-items: center; }
+        .history-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee; font-size: 0.8rem; color: #666; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        
+        .box-group { background: #fffaf0; padding: 4px; border-radius: 4px; display: none; margin-top: 4px; }
+        .backup-btn { background: #27ae60; color: white; width: 100%; padding: 12px; border-radius: 10px; border: none; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -178,228 +66,235 @@
 <div class="container">
     <header>
         <h1>🍃 茶叶管理系统</h1>
-        <div class="date-container">
-            <input type="date" id="mainDate" class="date-picker">
-        </div>
+        <input type="date" id="mainDate" class="date-picker">
     </header>
 
     <div class="summary-grid">
-        <div class="summary-item"><span>总收入</span><b id="finalIncome">¥ 0.00</b></div>
-        <div class="summary-item"><span>总支出</span><b id="finalExpense">¥ 0.00</b></div>
-        <div class="summary-item profit"><span>净利润</span><b id="finalProfit">¥ 0.00</b></div>
+        <div class="summary-item"><span>总收入</span><b id="finalIncome">0.00</b></div>
+        <div class="summary-item"><span>总支出</span><b id="finalExpense">0.00</b></div>
+        <div class="summary-item"><span>当日利润</span><b id="finalProfit" style="color:var(--accent-color)">0.00</b></div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h3>💰 销售收入 (卖茶)</h3>
+            <span id="salesTotalDisp" style="font-weight:bold; color:var(--primary-color)">¥ 0.00</span>
+        </div>
+        <div class="section-content">
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>买家/种类</th><th>销售形式</th><th>单价/斤数</th><th>小计</th><th></th></tr></thead>
+                    <tbody id="salesBody">
+                        <tr>
+                            <td>
+                                <input type="text" class="s-buyer" placeholder="买家" style="margin-bottom:4px">
+                                <select class="s-variety"><option>毛尖</option><option>春茶</option><option>夏茶</option></select>
+                            </td>
+                            <td>
+                                <select class="s-type" onchange="toggleBox(this)">
+                                    <option value="fresh">新鲜茶叶</option>
+                                    <option value="dry_normal">干茶-普通</option>
+                                    <option value="dry_box">干茶-礼盒</option>
+                                </select>
+                                <div class="box-group">
+                                    <span style="font-size:10px; color:var(--accent-color)">礼盒单价:</span>
+                                    <input type="number" class="s-box-price" placeholder="金额" oninput="calcAll()">
+                                </div>
+                            </td>
+                            <td>
+                                <input type="number" class="s-price" placeholder="单价" oninput="calcAll()" style="margin-bottom:4px">
+                                <input type="number" class="s-weight" placeholder="斤数" oninput="calcAll()">
+                            </td>
+                            <td style="font-weight:bold" class="s-subtotal">0.00</td>
+                            <td><button type="button" class="btn-del" onclick="removeRow(this)">✕</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="btn-add" onclick="addRow('salesBody')">+ 添加销售记录</button>
+        </div>
+    </div>
+
+    <div class="price-settings">
+        <div class="price-group"><label>全天单价</label><input type="number" id="price_all" value="30" oninput="calcAll()"></div>
+        <div class="price-group"><label>上午单价</label><input type="number" id="price_am" value="35" oninput="calcAll()"></div>
+        <div class="price-group"><label>下午单价</label><input type="number" id="price_pm" value="25" oninput="calcAll()"></div>
     </div>
 
     <form id="accountingForm">
         <div class="section">
-            <div class="section-header">
-                <h3>👤 采茶人工资</h3>
-                <div class="total-badge" id="laborTotalDisp">¥ 0.00</div>
-            </div>
+            <div class="section-header"><h3>👤 采茶工人工资</h3><span id="laborTotalDisp" style="font-weight:bold">0.00</span></div>
             <div class="section-content">
-                <div style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-muted);">
-                    今日单价 (元/斤)：
-                    <input type="number" id="globalLaborPrice" style="width:80px; display:inline-block; padding:4px 8px;" oninput="calcAll()" value="30">
-                </div>
                 <div class="table-wrapper">
-                    <table id="workerTable">
-                        <thead><tr><th style="width:40%">姓名</th><th style="width:30%">斤数</th><th style="width:20%">金额</th><th style="width:10%"></th></tr></thead>
+                    <table>
+                        <thead><tr><th>姓名</th><th>时段</th><th>斤数</th><th>金额</th><th></th></tr></thead>
                         <tbody id="workerBody">
                             <tr>
                                 <td><input type="text" class="w-name" placeholder="姓名"></td>
+                                <td><select class="w-period" onchange="calcAll()"><option value="all">全天</option><option value="am">上午</option><option value="pm">下午</option></select></td>
                                 <td><input type="number" class="w-weight" oninput="calcAll()" placeholder="0.0"></td>
-                                <td class="row-total w-subtotal">0.00</td>
-                                <td><button type="button" class="btn btn-del" onclick="removeRow(this)">✕</button></td>
+                                <td class="w-subtotal">0.00</td>
+                                <td><button type="button" class="btn-del" onclick="removeRow(this)">✕</button></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <button type="button" class="btn btn-add" onclick="addRow('workerBody')">+ 添加工人记录</button>
+                <button type="button" class="btn-add" onclick="addRow('workerBody')">+ 添加工人</button>
             </div>
         </div>
 
         <div class="section">
-            <div class="section-header">
-                <h3>🔥 加工与炒制</h3>
-                <div class="total-badge" id="factoryTotalDisp">¥ 0.00</div>
-            </div>
+            <div class="section-header"><h3>🔥 炒制加工费</h3><span id="factoryTotalDisp" style="font-weight:bold">0.00</span></div>
             <div class="section-content">
                 <div class="table-wrapper">
                     <table>
                         <thead><tr><th>项目</th><th>单价</th><th>斤数</th><th>金额</th><th></th></tr></thead>
                         <tbody id="factoryBody">
                             <tr>
-                                <td><input type="text" class="f-item" value="炒制加工"></td>
+                                <td><input type="text" class="f-item" value="炒茶加工"></td>
                                 <td><input type="number" class="f-price" oninput="calcAll()" placeholder="0"></td>
                                 <td><input type="number" class="f-weight" oninput="calcAll()" placeholder="0"></td>
-                                <td class="row-total f-subtotal">0.00</td>
-                                <td><button type="button" class="btn btn-del" onclick="removeRow(this)">✕</button></td>
+                                <td class="f-subtotal">0.00</td>
+                                <td><button type="button" class="btn-del" onclick="removeRow(this)">✕</button></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <button type="button" class="btn btn-add" onclick="addRow('factoryBody')">+ 添加其他支出</button>
+                <button type="button" class="btn-add" onclick="addRow('factoryBody')">+ 添加加工记录</button>
             </div>
         </div>
 
-        <div class="section">
-            <div class="section-header">
-                <h3>💰 销售明细</h3>
-                <div class="total-badge" id="salesTotalDisp">¥ 0.00</div>
-            </div>
-            <div class="section-content">
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th style="width:25%">买家/种类</th><th style="width:30%">销售形式</th><th style="width:30%">单价/重量</th><th style="width:15%">金额</th><th></th></tr></thead>
-                        <tbody id="salesBody">
-                            <tr>
-                                <td>
-                                    <input type="text" class="s-buyer" placeholder="买家" style="margin-bottom:5px">
-                                    <select class="s-variety">
-                                        <option>毛尖</option><option>春茶</option><option>夏茶</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <select class="s-type" onchange="toggleBox(this)">
-                                        <option value="fresh">新鲜茶叶</option>
-                                        <option value="dry_normal">干茶-普通装</option>
-                                        <option value="dry_box">干茶-礼盒装</option>
-                                    </select>
-                                    <div class="box-input-group">
-                                        <span style="font-size:11px; color:var(--accent-color)">礼盒单价:</span>
-                                        <input type="number" class="s-box-price" placeholder="每个金额" oninput="calcAll()">
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="number" class="s-price" oninput="calcAll()" placeholder="单价" style="margin-bottom:5px">
-                                    <input type="number" class="s-weight" oninput="calcAll()" placeholder="斤数">
-                                </td>
-                                <td class="row-total s-subtotal">0.00</td>
-                                <td><button type="button" class="btn btn-del" onclick="removeRow(this)">✕</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <button type="button" class="btn btn-add" onclick="addRow('salesBody')">+ 添加销售记录</button>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-save">保存今日账单数据</button>
+        <button type="submit" class="btn-save">💾 保存并锁定今日账单</button>
     </form>
 
-    <div class="backup-section" style="margin-top: 30px;">
-        <div style="font-size: 0.9rem; opacity: 0.8;">🛡️ 数据安全中心</div>
-        <button type="button" class="btn btn-excel" onclick="exportToExcel()">生成并导出 Excel 报表</button>
-        <p style="font-size: 11px; margin-top: 10px; opacity: 0.6;">* 建议每天保存后导出备份，防止浏览器缓存清除导致数据丢失</p>
+    <div class="history-section">
+        <h3 style="color:var(--primary-color); border-bottom:2px solid var(--primary-light); padding-bottom:5px;">🕒 历史账单明细</h3>
+        <div id="historyList"></div>
+        <button type="button" class="backup-btn" onclick="exportToExcel()">📊 导出详细 Excel 备份</button>
     </div>
 </div>
 
 <script>
-    const DB_KEY = 'tea_master_v4_ui';
+    const DB_KEY = 'tea_master_v6_final';
     document.getElementById('mainDate').valueAsDate = new Date();
 
     function addRow(id) {
         const tbody = document.getElementById(id);
         const row = tbody.rows[0].cloneNode(true);
         row.querySelectorAll('input').forEach(i => i.value = '');
-        row.querySelector('.row-total').innerText = '0.00';
-        if(id === 'salesBody') row.querySelector('.box-input-group').style.display = 'none';
+        row.querySelector('.w-subtotal, .f-subtotal, .s-subtotal').innerText = '0.00';
+        if(id === 'salesBody') row.querySelector('.box-group').style.display = 'none';
         tbody.appendChild(row);
     }
 
     function removeRow(btn) {
         const tbody = btn.closest('tbody');
-        if(tbody.rows.length > 1) {
-            btn.closest('tr').remove();
-            calcAll();
-        }
+        if(tbody.rows.length > 1) { btn.closest('tr').remove(); calcAll(); }
     }
 
     function toggleBox(select) {
-        const boxGroup = select.parentElement.querySelector('.box-input-group');
-        boxGroup.style.display = (select.value === 'dry_box') ? 'block' : 'none';
+        select.parentElement.querySelector('.box-group').style.display = (select.value === 'dry_box') ? 'block' : 'none';
         calcAll();
     }
 
     function calcAll() {
-        let laborTotal = 0, factoryTotal = 0, salesTotal = 0;
-        const gPrice = parseFloat(document.getElementById('globalLaborPrice').value) || 0;
+        const pAll = parseFloat(document.getElementById('price_all').value) || 0;
+        const pAm = parseFloat(document.getElementById('price_am').value) || 0;
+        const pPm = parseFloat(document.getElementById('price_pm').value) || 0;
+
+        let labor = 0, factory = 0, sales = 0;
 
         document.querySelectorAll('#workerBody tr').forEach(r => {
             const w = parseFloat(r.querySelector('.w-weight').value) || 0;
-            const sub = w * gPrice;
+            const p = r.querySelector('.w-period').value;
+            const sub = w * (p === 'am' ? pAm : (p === 'pm' ? pPm : pAll));
             r.querySelector('.w-subtotal').innerText = sub.toFixed(2);
-            laborTotal += sub;
+            labor += sub;
         });
 
         document.querySelectorAll('#factoryBody tr').forEach(r => {
-            const p = parseFloat(r.querySelector('.f-price').value) || 0;
-            const w = parseFloat(r.querySelector('.f-weight').value) || 0;
-            const sub = p * w;
+            const sub = (parseFloat(r.querySelector('.f-price').value) || 0) * (parseFloat(r.querySelector('.f-weight').value) || 0);
             r.querySelector('.f-subtotal').innerText = sub.toFixed(2);
-            factoryTotal += sub;
+            factory += sub;
         });
 
         document.querySelectorAll('#salesBody tr').forEach(r => {
-            const type = r.querySelector('.s-type').value;
-            const p = parseFloat(r.querySelector('.s-price').value) || 0;
-            const w = parseFloat(r.querySelector('.s-weight').value) || 0;
-            let sub = p * w;
-            if(type === 'dry_box') {
-                const boxP = parseFloat(r.querySelector('.s-box-price').value) || 0;
-                sub += (boxP * w);
-            }
+            const sub = (parseFloat(r.querySelector('.s-price').value) || 0) * (parseFloat(r.querySelector('.s-weight').value) || 0) + (r.querySelector('.s-type').value === 'dry_box' ? (parseFloat(r.querySelector('.s-box-price').value) || 0) * (parseFloat(r.querySelector('.s-weight').value) || 0) : 0);
             r.querySelector('.s-subtotal').innerText = sub.toFixed(2);
-            salesTotal += sub;
+            sales += sub;
         });
 
-        const expense = laborTotal + factoryTotal;
-        document.getElementById('laborTotalDisp').innerText = `¥ ${laborTotal.toFixed(2)}`;
-        document.getElementById('factoryTotalDisp').innerText = `¥ ${factoryTotal.toFixed(2)}`;
-        document.getElementById('salesTotalDisp').innerText = `¥ ${salesTotal.toFixed(2)}`;
-        document.getElementById('finalIncome').innerText = `¥ ${salesTotal.toFixed(2)}`;
-        document.getElementById('finalExpense').innerText = `¥ ${expense.toFixed(2)}`;
-        document.getElementById('finalProfit').innerText = `¥ ${(salesTotal - expense).toFixed(2)}`;
-        
-        return { income: salesTotal, expense: expense, profit: salesTotal - expense };
+        document.getElementById('laborTotalDisp').innerText = labor.toFixed(2);
+        document.getElementById('factoryTotalDisp').innerText = factory.toFixed(2);
+        document.getElementById('salesTotalDisp').innerText = sales.toFixed(2);
+        document.getElementById('finalIncome').innerText = sales.toFixed(2);
+        document.getElementById('finalExpense').innerText = (labor + factory).toFixed(2);
+        document.getElementById('finalProfit').innerText = (sales - (labor + factory)).toFixed(2);
+        return { income: sales, expense: labor + factory, profit: sales - (labor + factory) };
     }
 
     document.getElementById('accountingForm').addEventListener('submit', e => {
         e.preventDefault();
         const info = calcAll();
         const date = document.getElementById('mainDate').value;
-        
-        const workers = Array.from(document.querySelectorAll('#workerBody tr')).map(r => ({
-            项目: '采茶工资', 姓名: r.querySelector('.w-name').value, 详情: r.querySelector('.w-weight').value + '斤', 金额: r.querySelector('.w-subtotal').innerText
-        }));
-        const factory = Array.from(document.querySelectorAll('#factoryBody tr')).map(r => ({
-            项目: '加工费', 姓名: r.querySelector('.f-item').value, 详情: r.querySelector('.f-weight').value + '斤', 金额: r.querySelector('.f-subtotal').innerText
-        }));
-        const sales = Array.from(document.querySelectorAll('#salesBody tr')).map(r => ({
-            项目: '销售收入', 姓名: r.querySelector('.s-buyer').value, 详情: `${r.querySelector('.s-variety').value}(${r.querySelector('.s-type').selectedOptions[0].text})`, 金额: r.querySelector('.s-subtotal').innerText
-        }));
+        const details = [];
+
+        document.querySelectorAll('#workerBody tr').forEach(r => {
+            if(r.querySelector('.w-name').value) details.push({项目:'采茶', 姓名:r.querySelector('.w-name').value, 详情:r.querySelector('.w-period').selectedOptions[0].text+' '+r.querySelector('.w-weight').value+'斤', 金额:r.querySelector('.w-subtotal').innerText});
+        });
+        document.querySelectorAll('#factoryBody tr').forEach(r => {
+            if(r.querySelector('.f-weight').value) details.push({项目:'加工', 姓名:r.querySelector('.f-item').value, 详情:r.querySelector('.f-weight').value+'斤', 金额:r.querySelector('.f-subtotal').innerText});
+        });
+        document.querySelectorAll('#salesBody tr').forEach(r => {
+            if(r.querySelector('.s-buyer').value) details.push({项目:'销售', 姓名:r.querySelector('.s-buyer').value, 详情:r.querySelector('.s-variety').value+'('+r.querySelector('.s-type').selectedOptions[0].text+')', 金额:r.querySelector('.s-subtotal').innerText});
+        });
 
         let db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-        db.unshift({ date, ...info, details: [...workers, ...factory, ...sales] });
+        db.unshift({ date, ...info, details });
         localStorage.setItem(DB_KEY, JSON.stringify(db));
-        alert('✅ 数据保存成功！');
+        alert('保存成功！');
+        renderHistory();
     });
+
+    function renderHistory() {
+        const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+        document.getElementById('historyList').innerHTML = db.map((d, i) => `
+            <div class="history-item">
+                <div class="history-main">
+                    <div><b>📅 ${d.date}</b> <span style="margin-left:10px; color:${d.profit>=0? 'green':'red'}">利润: ¥${d.profit.toFixed(2)}</span></div>
+                    <div style="font-size:12px;"><button onclick="toggleDetail(${i})" style="border:none; background:var(--primary-light); color:var(--primary-color); border-radius:4px; padding:4px 8px; cursor:pointer;">查看明细</button> <button onclick="delRec(${i})" style="border:none; background:#fff1f0; color:red; margin-left:5px;">✕</button></div>
+                </div>
+                <div id="detail-${i}" class="history-detail">
+                    ${d.details.map(item => `<div class="detail-row"><span>${item.项目}: ${item.姓名} (${item.详情})</span><span>¥${item.金额}</span></div>`).join('')}
+                    <div class="detail-row" style="margin-top:5px; padding-top:5px; border-top:1px solid #eee; font-weight:bold;"><span>当日汇总</span><span>收入:¥${d.income.toFixed(2)} / 支出:¥${d.expense.toFixed(2)}</span></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleDetail(i) {
+        const el = document.getElementById(`detail-${i}`);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function delRec(i) { if(confirm('删除这条记录？')) { let db = JSON.parse(localStorage.getItem(DB_KEY)); db.splice(i,1); localStorage.setItem(DB_KEY, JSON.stringify(db)); renderHistory(); } }
 
     function exportToExcel() {
         const db = JSON.parse(localStorage.getItem(DB_KEY) || '[]');
-        if(db.length === 0) return alert('当前无历史数据可导出');
-
-        const flatData = [];
-        db.forEach(day => {
-            flatData.push({日期: day.date, 项目: '>>> 当日汇总 <<<', 详情: `利润: ${day.profit.toFixed(2)}`, 金额: `收入:${day.income.toFixed(2)} / 支出:${day.expense.toFixed(2)}`});
-            day.details.forEach(d => flatData.push({日期: day.date, ...d}));
-            flatData.push({}); 
+        if(!db.length) return alert('没有历史数据');
+        const flat = [];
+        db.forEach(d => {
+            flat.push({日期: d.date, 项目: '汇总', 详情: `利润:${d.profit.toFixed(2)}`, 金额: `收:${d.income.toFixed(2)} / 支:${d.expense.toFixed(2)}`});
+            d.details.forEach(it => flat.push({日期: d.date, 项目: it.项目, 姓名: it.姓名, 详情: it.详情, 金额: it.金额}));
+            flat.push({});
         });
-
-        const ws = XLSX.utils.json_to_sheet(flatData);
+        const ws = XLSX.utils.json_to_sheet(flat);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "茶叶账单");
-        XLSX.writeFile(wb, `茶叶管理报表_${new Date().toLocaleDateString()}.xlsx`);
+        XLSX.writeFile(wb, `茶叶账单备份_${new Date().toLocaleDateString()}.xlsx`);
     }
+
+    window.onload = renderHistory;
 </script>
 </body>
 </html>
